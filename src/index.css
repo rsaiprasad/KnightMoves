@@ -20,6 +20,12 @@
     transform: translate(45%, 55%);
   }
 
+  .cross {
+    fill: black;
+    font-size: 80px;
+    transform: translate(30%, 70%);
+  }
+
   .level1 {
     fill: red;
   }

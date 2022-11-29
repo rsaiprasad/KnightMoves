@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Chessground as NativeChessground } from 'chessground';
 import { useToggle } from 'usehooks-ts';
 
@@ -58,54 +58,63 @@ const getSvgForNumber = (n: number) => {
     return `<text class="level level${n}">${n}</text>`;
 }
 
-
-const updateSquares = (ground: Ground, blockedSquares: number[] = []) => {
-    const setup = parseFen(`${ground.getFen()} w - - 0 1`).unwrap();
-    const shapes = [];
-    for(let square of setup.board.knight) {
-        const moves = knightMoves(square, blockedSquares);
-        for(let sq in moves) {
-            if(moves[sq]) {
-                const orig = `${FILE_NAMES[squareFile(parseInt(sq))]}${RANK_NAMES[squareRank(parseInt(sq))]}` as any;
-                const brushColor = brushColorMap[moves[sq].toString()];
-                shapes.push( { orig, customSvg: getSvgForNumber(moves[sq]) });
-                if(moves[sq] <= 3) {
-                    //shapes.push( { orig, brush: brushColor ?? 'white' });
-                }
-            }
-        }
-    }
-    ground.setAutoShapes(shapes);
+const getSvgForCross = () => {
+    return `<text class="level cross">x</text>`;
 }
 
 export const ChessGround = () => {
 
     const chessBoardRef = useRef(null);
     const isLoaded = useRef(false);
-    const [isBlocking, setBlocking] = useToggle(false);
+    const [isBlocking, setBlocking] = useState<boolean>(false);
+    const [blockedSquares, setBlockedSquares] = useState<number[]>([]);
+    const [ground, setGround] = useState<Ground>();
+
+    const updateSquares = () => {
+        if(ground) {
+            const setup = parseFen(`${ground.getFen()} w - - 0 1`).unwrap();
+            const shapes = [];
+            for(let square of setup.board.knight) {
+                const moves = knightMoves(square, blockedSquares);
+                for(let sq in moves) {
+                    if(moves[sq]) {
+                        const orig = `${FILE_NAMES[squareFile(parseInt(sq))]}${RANK_NAMES[squareRank(parseInt(sq))]}` as any;
+                        const brushColor = brushColorMap[moves[sq].toString()];
+                        shapes.push( { orig, customSvg: getSvgForNumber(moves[sq]) });
+                        if(moves[sq] <= 3) {
+                            //shapes.push( { orig, brush: brushColor ?? 'white' });
+                        }
+                    }
+                }
+            }
+            for(let square of blockedSquares) {
+                const orig = `${FILE_NAMES[squareFile(square)]}${RANK_NAMES[squareRank(square)]}` as any;
+                shapes.push({ orig, customSvg: getSvgForCross()});
+                shapes.push( { orig, brush: 'red' });
+            }
+            ground.setAutoShapes(shapes);
+        }
+    }
+
+
+    const handleSquareSelect = (key: string) => {
+            if(isBlocking) {
+                const square = parseSquare(key)!;
+                if(blockedSquares.indexOf(square) === -1) {
+                    setBlockedSquares((prev: number[]) => {
+                        return [...prev, square];
+                    });
+                }
+            }
+            updateSquares();
+    }
 
     useEffect(() => {
         if(chessBoardRef.current && !isLoaded.current) {
-            const blockedSquares: number[] = [];
             const ground = NativeChessground(chessBoardRef.current, {
                 fen: INITITAL_FEN,
                 highlight: {
                     lastMove: false
-                },
-                events: {
-                    move: (org, dest, cap) => {
-                        updateSquares(ground, blockedSquares);
-                    },
-                    select:(key) => {
-                        if(isBlocking) {
-                            const square = parseSquare(key)!;
-                            if(blockedSquares.indexOf(square) === -1) {
-                                blockedSquares.push(square);
-                            }
-                        }
-                        updateSquares(ground, blockedSquares);
-                        console.log(`-- blocked squares --`, blockedSquares);
-                    }
                 },
                 drawable: {
                     brushes: {
@@ -114,15 +123,26 @@ export const ChessGround = () => {
                     }
                 }
             });
-            updateSquares(ground, blockedSquares);
+            setGround(ground);
             isLoaded.current = true;
         }
     },  [chessBoardRef.current]);
 
+    useEffect(() => {
+        if(ground) {
+            updateSquares();
+            ground.set({events: {
+                move: updateSquares,
+                select: handleSquareSelect
+            }})
+           
+        }
+    }, [ground, updateSquares, handleSquareSelect]);
+
     return (<div id="wrapper">
         <div id="chessground" ref={chessBoardRef}></div>
         <div id="controls">
-            <button onClick={setBlocking}>{isBlocking ? 'Done blocking': 'Block squares' }</button>
+            <button onClick={() => {setBlocking((prev) => !prev); }}>{isBlocking ? 'Done blocking': 'Block squares' }</button>
         </div>
     </div>)
 }
