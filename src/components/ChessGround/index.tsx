@@ -35,9 +35,7 @@ const knightMoves = (start: number, blockedSquares: number[] = []) => {
       visited[node!] = depth;
       const aSquares = knightAttacks(node!);
       for(let square of aSquares) {
-        //console.log(`-- square --`, square, `-- blocked squares --`, blockedSquares);
         if(blockedSquares.indexOf(square) !== -1) {
-            //console.log(`-- ignoring square --`, square);
             continue;
         }
         queue.push(square);
@@ -100,11 +98,16 @@ export const ChessGround = () => {
     const handleSquareSelect = (key: string) => {
             if(isBlocking) {
                 const square = parseSquare(key)!;
-                if(blockedSquares.indexOf(square) === -1) {
-                    setBlockedSquares((prev: number[]) => {
+                setBlockedSquares((prev: number[]) => {
+                    const indexOfSquare = blockedSquares.indexOf(square);
+                    if(indexOfSquare === -1) {
                         return [...prev, square];
-                    });
-                }
+                    } 
+                    const existingSquares = [...prev];
+                    existingSquares.splice(indexOfSquare, 1);
+                    return existingSquares;
+                });
+
             }
             updateSquares();
     }
@@ -143,6 +146,7 @@ export const ChessGround = () => {
         <div id="chessground" ref={chessBoardRef}></div>
         <div id="controls">
             <button onClick={() => {setBlocking((prev) => !prev); }}>{isBlocking ? 'Done blocking': 'Block squares' }</button>
+            {!!blockedSquares.length && (<button onClick={() => {setBlockedSquares([]); }}>Clear blocked squares</button>)}
         </div>
     </div>)
 }

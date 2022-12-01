@@ -4,6 +4,15 @@
       height: 900px;
   }
 
+  #controls {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #controls > button {
+    margin: 10px;
+  }
+
   #wrapper {
     display: flex;
   }
