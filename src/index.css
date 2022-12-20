@@ -1,12 +1,18 @@
 
+  body {
+    font-family: 'Courier New', Courier, monospace;
+  }
+
   #chessground {
-      width: 900px;
-      height: 900px;
+      width: 90vh;
+      height: 90vh;
   }
 
   #controls {
     display: flex;
     flex-direction: column;
+    max-width: 200px;
+    text-align: left;
   }
 
   #controls > button {

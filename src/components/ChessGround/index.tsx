@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Chessground as NativeChessground } from 'chessground';
-import { useToggle } from 'usehooks-ts';
 
 import { squareFile, squareRank, FILE_NAMES, RANK_NAMES, parseSquare } from 'chessops';
 import { parseFen } from 'chessops/fen'
@@ -12,15 +11,6 @@ import "chessground/assets/chessground.brown.css";
 import "chessground/assets/chessground.cburnett.css";
 
 const INITITAL_FEN = '8/8/8/8/3N4/8/8/8 w - - 0 1';
-
-const getSquare = (square: number) => `${FILE_NAMES[squareFile(square)]}${RANK_NAMES[squareRank(square)]}`;
-const brushColorMap: Record<string, string> = {
-    '1': 'red',
-    '2': 'orange',
-    '3': 'blue',
-    '4': 'green'
-}
-
 
 const knightMoves = (start: number, blockedSquares: number[] = []) => {
   const visited: Record<number, number> = {};
@@ -77,7 +67,6 @@ export const ChessGround = () => {
                 for(let sq in moves) {
                     if(moves[sq]) {
                         const orig = `${FILE_NAMES[squareFile(parseInt(sq))]}${RANK_NAMES[squareRank(parseInt(sq))]}` as any;
-                        const brushColor = brushColorMap[moves[sq].toString()];
                         shapes.push( { orig, customSvg: getSvgForNumber(moves[sq]) });
                         if(moves[sq] <= 3) {
                             //shapes.push( { orig, brush: brushColor ?? 'white' });
@@ -147,6 +136,12 @@ export const ChessGround = () => {
         <div id="controls">
             <button onClick={() => {setBlocking((prev) => !prev); }}>{isBlocking ? 'Done blocking': 'Block squares' }</button>
             {!!blockedSquares.length && (<button onClick={() => {setBlockedSquares([]); }}>Clear blocked squares</button>)}
+            <div id="instructions">
+                <ul>
+                    <li>Drag the knight to a square to see the number of moves it will take to reach other squares</li>
+                    <li>Click the "Block squares" button above to mark some squares as blocked for calculating move count</li>
+                </ul>
+            </div>
         </div>
     </div>)
 }
